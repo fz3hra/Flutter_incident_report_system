@@ -12,26 +12,63 @@ class StepperPage extends StatefulWidget {
 }
 
 class _StepperPageState extends State<StepperPage> {
-  // final dynamic _startDate = DateFormat('yyyy-MM-dd');
   // ignore: prefer_final_fields
-  static dynamic _steps = [
-    Step(title: Text("Severity"), content: _Severity()),
-    Step(title: Text("What Happened"), content: _Occurance()),
-    Step(
-      title: Text("When did it occur?"),
-      content: DatetimePicker(),
-    ),
-    Step(
-      title: Text("Where did it happen?"),
-      content: _OccuredIncident(),
-    ),
-    Step(
-      title: Text("Incident Summary"),
-      content: _Summary(),
-    ),
-  ];
-
   int _currentStep = 0;
+  dynamic selectDate = DateTime.now();
+  dynamic selectTime;
+  TextEditingController regionController = new TextEditingController();
+  String testt = '';
+  bool isCompleted = false;
+
+  // ignore: prefer_final_fields
+  List<Step> _steps() => [
+        Step(
+          isActive: _currentStep >= 0,
+          title: Text("Severity"),
+          content: _Severity(),
+        ),
+        Step(
+          isActive: _currentStep >= 1,
+          title: Text("What Happened"),
+          content: Occurance(
+            testing: (test) {
+              testt = test;
+            },
+          ),
+        ),
+        Step(
+          isActive: _currentStep >= 2,
+          title: Text("When did it occur?"),
+          content: DatetimePicker(
+            selectDate: (val) {
+              selectDate = val;
+            },
+            selectTime: (timeVal) {
+              selectTime = timeVal;
+            },
+          ),
+        ),
+        Step(
+          isActive: _currentStep >= 3,
+          title: Text("Where did it happen?"),
+          content: _OccuredIncident(
+            region: (region) {
+              regionController = region;
+            },
+          ),
+        ),
+        Step(
+          isActive: _currentStep >= 4,
+          title: Text("Incident Summary"),
+          content: _Summary(
+            regionController: regionController,
+            dateOccurred: selectDate,
+            testTwo: selectTime,
+            test: testt,
+          ),
+        ),
+      ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -44,30 +81,67 @@ class _StepperPageState extends State<StepperPage> {
           title: 'Stepper',
         ),
       ),
-      body: Stepper(
-        // type: StepperType.horizontal,
-        steps: _steps,
-        currentStep: _currentStep,
-        onStepTapped: (step) => setState(() => _currentStep = step),
-        onStepContinue: () {
-          setState(() {
-            if (_currentStep < _steps.length - 1) {
-              _currentStep += 1;
-            } else {
-              _currentStep = 0;
-            }
-          });
-        },
-        onStepCancel: () {
-          setState(() {
-            if (_currentStep > 0) {
-              _currentStep -= 1;
-            } else {
-              _currentStep = 0;
-            }
-          });
-        },
-      ),
+      body: isCompleted
+          ? Container(
+              child: Center(
+                child: Text("Sent to Server"),
+              ),
+            )
+          : Stepper(
+              controlsBuilder: (context, controls) {
+                final isLastStep = _currentStep == _steps().length - 1;
+                return Container(
+                  margin: EdgeInsets.only(top: 50),
+                  child: Row(
+                    children: [
+                      Expanded(
+                          child: ElevatedButton(
+                        child: Text(isLastStep ? 'CONFIRM' : 'NEXT'),
+                        onPressed: controls.onStepContinue,
+                      )),
+                      const SizedBox(width: 12),
+                      if (_currentStep != 0)
+                        Expanded(
+                            child: ElevatedButton(
+                          child: Text('Back'),
+                          onPressed: controls.onStepCancel,
+                        )),
+                    ],
+                  ),
+                );
+              },
+              // type: StepperType.horizontal,
+              steps: _steps(),
+              currentStep: _currentStep,
+              onStepTapped: (step) => setState(() => _currentStep = step),
+              onStepContinue: () {
+                final isLastStep = _currentStep == _steps().length - 1;
+                if (isLastStep) {
+                  setState(() {
+                    isCompleted = true;
+                  });
+                  print('Completed');
+                  // send data to server
+                } else {
+                  setState(() {
+                    if (_currentStep < _steps().length - 1) {
+                      _currentStep += 1;
+                    } else {
+                      _currentStep = 0;
+                    }
+                  });
+                }
+              },
+              onStepCancel: _currentStep == 0
+                  ? null
+                  : () => setState(() {
+                        if (_currentStep > 0) {
+                          _currentStep -= 1;
+                        } else {
+                          _currentStep = 0;
+                        }
+                      }),
+            ),
     );
   }
 }
@@ -90,25 +164,28 @@ class _Severity extends StatelessWidget {
       height: 360.0,
       child: Column(
         children: [
-          Container(
-            width: 250.0,
-            height: 90,
-            child: Center(
-              child: TextButton(
-                onPressed: () {},
-                child: Text(
-                  "High",
-                  style: TextStyle(color: Colors.black),
-                ),
-              ),
+          InkWell(
+            onTap: () {
+              print("ink");
+            },
+            child: Container(
+              width: 250.0,
+              height: 90,
+              child: Center(
+                  child: Text('High',
+                      style: TextStyle(
+                        color: Colors.black,
+                      ))),
             ),
           ),
-          Container(
-            width: 250.0,
-            height: 90,
-            child: Center(
-              child: TextButton(
-                onPressed: () {},
+          InkWell(
+            onTap: () {
+              print("2");
+            },
+            child: Container(
+              width: 250.0,
+              height: 90,
+              child: Center(
                 child: Text(
                   "Medium",
                   style: TextStyle(color: Colors.black),
@@ -116,12 +193,12 @@ class _Severity extends StatelessWidget {
               ),
             ),
           ),
-          Container(
-            width: 250.0,
-            height: 90,
-            child: Center(
-              child: TextButton(
-                onPressed: () {},
+          InkWell(
+            onTap: () {},
+            child: Container(
+              width: 250.0,
+              height: 90,
+              child: Center(
                 child: Text(
                   "Slight",
                   style: TextStyle(color: Colors.black),
@@ -129,12 +206,12 @@ class _Severity extends StatelessWidget {
               ),
             ),
           ),
-          Container(
-            width: 250.0,
-            height: 90,
-            child: Center(
-              child: TextButton(
-                onPressed: () {},
+          InkWell(
+            onTap: () {},
+            child: Container(
+              width: 250.0,
+              height: 90,
+              child: Center(
                 child: Text(
                   "Normal",
                   style: TextStyle(color: Colors.black),
@@ -148,33 +225,65 @@ class _Severity extends StatelessWidget {
   }
 }
 
-class _Occurance extends StatelessWidget {
-  const _Occurance({Key? key}) : super(key: key);
+class Occurance extends StatefulWidget {
+  Function(dynamic) testing;
+  Occurance({
+    Key? key,
+    required this.testing,
+  }) : super(key: key);
 
+  @override
+  State<Occurance> createState() => OccuranceState();
+}
+
+class OccuranceState extends State<Occurance> {
+  dynamic test;
+  var fire = "Fire";
+  var NearMiss = "Near Miss";
+  var Accident = "Accident";
+  var theft = "theft";
+  var PropertyDamage = "Property Damage";
   @override
   Widget build(BuildContext context) {
     return Container(
       child: Column(
         children: [
           TextButton(
-            onPressed: () {},
-            child: Text("Fire"),
+            onPressed: () {
+              setState(() {
+                test = fire;
+                this.widget.testing(test);
+              });
+            },
+            child: Text(fire),
           ),
           TextButton(
-            onPressed: () {},
-            child: Text("Near Miss"),
+            onPressed: () {
+              test = NearMiss;
+              this.widget.testing(test);
+            },
+            child: Text(NearMiss),
           ),
           TextButton(
-            onPressed: () {},
-            child: Text("Accident"),
+            onPressed: () {
+              test = Accident;
+              this.widget.testing(test);
+            },
+            child: Text(Accident),
           ),
           TextButton(
-            onPressed: () {},
-            child: Text("theft"),
+            onPressed: () {
+              test = theft;
+              this.widget.testing(test);
+            },
+            child: Text(theft),
           ),
           TextButton(
-            onPressed: () {},
-            child: Text("Property Damage"),
+            onPressed: () {
+              test = PropertyDamage;
+              this.widget.testing(test);
+            },
+            child: Text(PropertyDamage),
           ),
         ],
       ),
@@ -184,21 +293,52 @@ class _Occurance extends StatelessWidget {
 
 // ! add map here
 class _OccuredIncident extends StatefulWidget {
-  _OccuredIncident({Key? key}) : super(key: key);
+  Function(dynamic) region;
+  _OccuredIncident({
+    Key? key,
+    required this.region,
+  }) : super(key: key);
 
   @override
   State<_OccuredIncident> createState() => __OccuredIncidentState();
 }
 
 class __OccuredIncidentState extends State<_OccuredIncident> {
+  TextEditingController regionController = new TextEditingController();
+
   @override
   Widget build(BuildContext context) {
-    return Container();
+    print(regionController.text);
+    return Container(
+      margin: EdgeInsets.all(16),
+      child: TextField(
+        controller: regionController,
+        decoration: InputDecoration(
+          border: OutlineInputBorder(),
+          labelText: 'Region',
+        ),
+        onChanged: (text) {
+          setState(() {
+            this.widget.region(regionController);
+          });
+        },
+      ),
+    );
   }
 }
 
 class _Summary extends StatelessWidget {
-  const _Summary({Key? key}) : super(key: key);
+  final dynamic dateOccurred;
+  final dynamic testTwo;
+  final dynamic regionController;
+  final dynamic test;
+  _Summary({
+    Key? key,
+    this.dateOccurred,
+    required this.testTwo,
+    required this.regionController,
+    required this.test,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -211,7 +351,7 @@ class _Summary extends StatelessWidget {
             children: [
               SummaryDetails(
                 leftInformation: "What Happened?",
-                rightInformation: "Near miss",
+                rightInformation: test,
               ),
               SummaryDetails(
                 leftInformation: "Priority",
@@ -219,11 +359,11 @@ class _Summary extends StatelessWidget {
               ),
               SummaryDetails(
                 leftInformation: "Date",
-                rightInformation: "April 5, 2019",
+                rightInformation: DateFormat('yyyy-MM-dd').format(dateOccurred),
               ),
               SummaryDetails(
                 leftInformation: "Region",
-                rightInformation: "Port Louis",
+                rightInformation: regionController.text,
               ),
             ],
           ),

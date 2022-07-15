@@ -3,6 +3,14 @@ import 'package:incident_report_system/widget/inputs.dart';
 import 'package:intl/intl.dart';
 
 class DatetimePicker extends StatefulWidget {
+  Function(dynamic) selectDate;
+  Function(dynamic) selectTime;
+
+  DatetimePicker({
+    required this.selectDate,
+    required this.selectTime,
+  });
+
   @override
   _DatetimePickerState createState() => _DatetimePickerState();
 }
@@ -54,6 +62,7 @@ class _DatetimePickerState extends State<DatetimePicker> {
     if (picked != null) {
       setState(() {
         this.selectedDate = picked;
+        this.widget.selectDate(picked);
       });
     }
   }
@@ -80,6 +89,7 @@ class _DatetimePickerState extends State<DatetimePicker> {
           picked.hour,
           picked.minute,
         );
+        this.widget.selectTime(picked);
       });
     }
   }
